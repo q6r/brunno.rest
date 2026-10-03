@@ -22,6 +22,12 @@ export const profile = {
 export const GITHUB_URL = `https://github.com/${profile.github}`;
 
 /**
+ * Repositórios fixados na grade ("dono/repo"), sempre primeiro e nessa ordem. Aceita
+ * repos de organizações; o resto da grade vem dos seus repos públicos.
+ */
+export const pinnedRepos = ["pixel-cord/Pixelcord"];
+
+/**
  * A bio do Figma. É função para a idade ser calculada a cada render da página (que se
  * regenera de hora em hora), e não uma vez só quando o módulo carrega.
  */
