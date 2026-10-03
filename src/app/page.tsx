@@ -7,7 +7,16 @@ import { SocialLinks } from "@/components/profile/SocialLinks";
 import { RepoGrid } from "@/components/projects/RepoGrid";
 import { Stage } from "@/components/Stage";
 import { Reveal } from "@/components/ui/Reveal";
-import { activity, getBio, GITHUB_URL, pinnedRepos, profile, socials, stack } from "@/content/profile";
+import {
+  activity,
+  getBio,
+  GITHUB_URL,
+  pinnedRepos,
+  preferredLanguages,
+  profile,
+  socials,
+  stack,
+} from "@/content/profile";
 import { getRepos } from "@/lib/github";
 import { ENTRANCE } from "@/lib/motion";
 
@@ -17,7 +26,7 @@ import { ENTRANCE } from "@/lib/motion";
  * repositórios, que vem do GitHub. No celular vira uma coluna só, na ordem do HTML.
  */
 export default async function Home() {
-  const repos = await getRepos(profile.github, { pinned: pinnedRepos });
+  const repos = await getRepos(profile.github, { pinned: pinnedRepos, preferLanguages: preferredLanguages });
 
   return (
     <Stage>

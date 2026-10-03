@@ -31,6 +31,9 @@ export type RawActivity = {
     largeText?: string | null;
     largeImageURL?: string | null;
     largeImageUrl?: string | null;
+    smallText?: string | null;
+    smallImageURL?: string | null;
+    smallImageUrl?: string | null;
   } | null;
 };
 

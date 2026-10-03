@@ -25,10 +25,14 @@ type CardView = {
   key: string;
   image: string | null;
   imageHint: string;
+  /** Ícone pequeno no canto da capa, com o texto dele no tooltip. */
+  smallImage: string | null;
+  smallHint: string | null;
   label: string;
   icon: BrandName;
   title: string;
-  subtitle: string | null;
+  /** Até duas linhas abaixo do título (no VS Code: projeto e arquivo). */
+  lines: string[];
   /** Música (ou qualquer coisa com fim): posição e duração em segundos. */
   progress: { elapsed: number; total: number } | null;
   /** Jogo (sem fim): segundos desde o início e a hora em que começou. */
@@ -45,10 +49,12 @@ function toView(activity: Activity | null, status: PresenceStatus | undefined, i
       key: "idle",
       image: idleImage,
       imageHint: `Discord: ${STATUS_LABEL[status ?? "offline"]}`,
+      smallImage: null,
+      smallHint: null,
       label: "Discord",
       icon: "discord",
       title: "Idle",
-      subtitle: "nothing going on right now",
+      lines: ["nothing going on right now"],
       progress: null,
       elapsed: null,
       lyrics: null,
@@ -66,10 +72,14 @@ function toView(activity: Activity | null, status: PresenceStatus | undefined, i
     key: activity.key,
     image: activity.image,
     imageHint: activity.largeText ?? activity.name,
+    smallImage: activity.smallImage,
+    smallHint: activity.smallText,
     label: listening ? `${KIND_LABEL.listening} ${activity.name}` : KIND_LABEL[activity.kind],
     icon: activity.name === "Spotify" ? "spotify" : "discord",
     title,
-    subtitle: listening ? artists && `by ${artists}` : (activity.details ?? activity.state),
+    lines: (listening ? [artists && `by ${artists}`] : [activity.details, activity.state]).filter(
+      (line): line is string => Boolean(line),
+    ),
     progress: elapsed !== null && total !== null ? { elapsed: Math.min(elapsed, total), total } : null,
     elapsed:
       elapsed !== null && total === null && start !== null
@@ -167,40 +177,54 @@ export function ActivityCard({ discordId, idleImage, delay = 0, className }: Act
       animate="show"
     >
       <motion.div variants={coverIn} className="shrink-0">
-        {playing ? (
-          <Tooltip
-            content={
-              <span className="flex flex-col">
-                Ver letra
-                {playing.album && <span className="text-chip-ink">{playing.album}</span>}
-              </span>
-            }
-          >
-            <motion.button
-              type="button"
-              onClick={openLyrics}
-              aria-label={`Ver a letra de ${playing.title}`}
-              className={clsx(coverClass, "cursor-pointer")}
-              whileHover={{ scale: 1.04, rotate: -2 }}
-              whileTap={{ scale: 0.97 }}
-              transition={SPRING_POP}
+        {/* Capa e ícone pequeno se mexem juntos no hover, como uma peça só. */}
+        <motion.div className="relative" whileHover={{ scale: 1.04, rotate: -2 }} whileTap={{ scale: 0.97 }} transition={SPRING_POP}>
+          {playing ? (
+            <Tooltip
+              content={
+                <span className="flex flex-col">
+                  Ver letra
+                  {playing.album && <span className="text-chip-ink">{playing.album}</span>}
+                </span>
+              }
             >
-              {coverArt}
-            </motion.button>
-          </Tooltip>
-        ) : (
-          <Tooltip content={view?.imageHint ?? "Conectando ao Discord…"}>
-            <motion.div
-              tabIndex={0}
-              className={coverClass}
-              whileHover={{ scale: 1.04, rotate: -2 }}
-              whileTap={{ scale: 0.97 }}
-              transition={SPRING_POP}
-            >
-              {coverArt}
-            </motion.div>
-          </Tooltip>
-        )}
+              <button
+                type="button"
+                onClick={openLyrics}
+                aria-label={`Ver a letra de ${playing.title}`}
+                className={clsx(coverClass, "cursor-pointer")}
+              >
+                {coverArt}
+              </button>
+            </Tooltip>
+          ) : (
+            <Tooltip content={view?.imageHint ?? "Conectando ao Discord…"}>
+              <div tabIndex={0} className={coverClass}>
+                {coverArt}
+              </div>
+            </Tooltip>
+          )}
+
+          {/* O ícone pequeno da atividade (ex.: VS Code), recortado no canto como no Discord. */}
+          <AnimatePresence>
+            {view?.smallImage && (
+              <motion.span
+                key={view.smallImage}
+                className="absolute -right-2 -bottom-2"
+                initial={{ opacity: 0, scale: 0.4 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.4 }}
+                transition={{ type: "spring", bounce: 0.45, duration: 0.5, delay: 0.15 }}
+              >
+                <Tooltip content={view.smallHint ?? view.title}>
+                  <span className="relative block size-11 overflow-hidden rounded-full bg-chip ring-[5px] ring-canvas">
+                    <Image src={view.smallImage} alt="" fill unoptimized className="object-cover" />
+                  </span>
+                </Tooltip>
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </motion.div>
 
       {/* Altura fixa: a barra fica sempre no mesmo lugar do Figma, com ou sem subtítulo. */}
@@ -227,11 +251,18 @@ export function ActivityCard({ discordId, idleImage, delay = 0, className }: Act
                   view.title
                 )}
               </motion.p>
-              {view.subtitle && (
-                <motion.p variants={fadeUp} className="mt-1 truncate text-[14px] font-bold leading-[18px] text-muted">
-                  {view.subtitle}
+              {/* A coluna é estreita e corta o texto: o tooltip mostra a linha inteira. */}
+              {view.lines.map((line, i) => (
+                <motion.p
+                  key={i}
+                  variants={fadeUp}
+                  className={clsx("text-[14px] font-bold leading-[18px] text-muted", i === 0 ? "mt-1" : "mt-0.5")}
+                >
+                  <Tooltip content={<span className="block max-w-72">{line}</span>}>
+                    <span className="block truncate">{line}</span>
+                  </Tooltip>
                 </motion.p>
-              )}
+              ))}
 
               {view.progress && (
                 <motion.div variants={fadeUp} className="absolute top-[115px] left-0">

@@ -54,16 +54,21 @@ function toRepo(repo: GithubRepo): Repo {
 type RepoOptions = {
   /** "dono/repo" que entram primeiro, nessa ordem; servem para repos de organizações. */
   pinned?: string[];
+  /** Linguagens que vêm na frente entre os seus repos, nessa ordem. */
+  preferLanguages?: string[];
   limit?: number;
 };
 
 /**
  * Repositórios da grade: os fixados primeiro e, completando, os públicos do usuário
- * como no `getTopRepos` do cee (sem forks nem arquivados, por estrelas e, no empate,
- * o mais recente). O repo do README de perfil (`usuario/usuario`) fica de fora.
+ * (sem forks nem arquivados): primeiro as linguagens preferidas, depois por estrelas e,
+ * no empate, o mais recente. O repo do README de perfil (`usuario/usuario`) fica de fora.
  * Se a API falhar, devolve o que conseguiu (ou nada, e a grade mostra o link do perfil).
  */
-export async function getRepos(username: string, { pinned = [], limit = 6 }: RepoOptions = {}): Promise<Repo[]> {
+export async function getRepos(
+  username: string,
+  { pinned = [], preferLanguages = [], limit = 6 }: RepoOptions = {},
+): Promise<Repo[]> {
   const [fixed, owned] = await Promise.all([
     Promise.all(
       pinned
@@ -73,9 +78,18 @@ export async function getRepos(username: string, { pinned = [], limit = 6 }: Rep
     github<GithubRepo[]>(`/users/${encodeURIComponent(username)}/repos?per_page=100&sort=pushed`),
   ]);
 
+  const rank = (repo: GithubRepo) => {
+    const index = repo.language ? preferLanguages.indexOf(repo.language) : -1;
+    return index === -1 ? preferLanguages.length : index;
+  };
   const mine = (owned ?? [])
     .filter((repo) => !repo.fork && !repo.archived && repo.name.toLowerCase() !== username.toLowerCase())
-    .sort((a, b) => b.stargazers_count - a.stargazers_count || Date.parse(b.pushed_at) - Date.parse(a.pushed_at));
+    .sort(
+      (a, b) =>
+        rank(a) - rank(b) ||
+        b.stargazers_count - a.stargazers_count ||
+        Date.parse(b.pushed_at) - Date.parse(a.pushed_at),
+    );
 
   const seen = new Set<string>();
   return [...fixed.filter((repo): repo is GithubRepo => repo !== null), ...mine]
