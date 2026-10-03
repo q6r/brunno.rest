@@ -1,4 +1,4 @@
-export type BrandName = "instagram" | "github" | "discord" | "lastfm" | "spotify";
+export type BrandName = "instagram" | "crunchyroll" | "github" | "discord" | "lastfm" | "spotify";
 
 /** Destaque da bio: o "chip" escuro do Figma, com tooltip opcional. */
 export type Highlight = {

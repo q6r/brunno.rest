@@ -69,6 +69,19 @@ export function safeActivityImage(raw: unknown, applicationId?: string | null): 
 }
 
 /**
+ * Imagens externas passam pelo proxy de mídia do Discord, que redimensiona mantendo a
+ * proporção e converte para WebP: um pôster de 2 MB vira ~10 KB.
+ */
+function sized(url: string | null, px: number) {
+  if (!url?.startsWith("https://media.discordapp.net/")) return url;
+  const resized = new URL(url);
+  resized.searchParams.set("width", String(px));
+  resized.searchParams.set("height", String(px));
+  resized.searchParams.set("format", "webp");
+  return resized.toString();
+}
+
+/**
  * Tira caracteres invisíveis e de controle (o vscord, por exemplo, preenche campos
  * vazios com zero-width space) e espaços sobrando. Texto que sobra vazio vira null.
  */
@@ -100,8 +113,8 @@ export function pickActivity(presence: DiscordPresence | null): Activity | null 
     details,
     state,
     largeText: cleanText(raw.assets?.largeText),
-    image: safeActivityImage(raw.assets?.largeImageURL ?? raw.assets?.largeImageUrl, raw.applicationId),
-    smallImage: safeActivityImage(raw.assets?.smallImageURL ?? raw.assets?.smallImageUrl, raw.applicationId),
+    image: sized(safeActivityImage(raw.assets?.largeImageURL ?? raw.assets?.largeImageUrl, raw.applicationId), 400),
+    smallImage: sized(safeActivityImage(raw.assets?.smallImageURL ?? raw.assets?.smallImageUrl, raw.applicationId), 96),
     smallText: cleanText(raw.assets?.smallText),
     start: raw.startTimestamp ?? raw.timestamps?.start ?? null,
     end: raw.endTimestamp ?? raw.timestamps?.end ?? null,

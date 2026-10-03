@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { AnimatePresence, motion, type Variants } from "motion/react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { BrandIcon } from "@/components/icons";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -43,6 +43,12 @@ type CardView = {
 
 const toSeconds = (ms: number) => Math.max(0, Math.floor(ms / 1000));
 
+/** Ícone do cabeçalho por app (nome da atividade); o resto usa o do Discord. */
+const APP_ICONS: Partial<Record<string, BrandName>> = {
+  Spotify: "spotify",
+  Crunchyroll: "crunchyroll",
+};
+
 function toView(activity: Activity | null, status: PresenceStatus | undefined, idleImage: string, now: number | null): CardView {
   if (!activity) {
     return {
@@ -61,12 +67,20 @@ function toView(activity: Activity | null, status: PresenceStatus | undefined, i
     };
   }
 
-  const { start, end } = activity;
+  const { start, end, kind } = activity;
   const elapsed = now !== null && start !== null ? toSeconds(now - start) : null;
   const total = start !== null && end !== null && end > start ? toSeconds(end - start) : null;
-  const listening = activity.kind === "listening";
-  const title = listening ? (activity.details ?? activity.name) : activity.name;
-  const artists = activity.state?.replaceAll("; ", ", ") ?? null;
+  const listening = kind === "listening";
+  // Ouvindo ou assistindo, como no Discord: o app vai no cabeçalho ("Watching Crunchyroll")
+  // e o conteúdo (música, série) vira o título.
+  const titled = listening || kind === "watching";
+  const title = titled ? (activity.details ?? activity.name) : activity.name;
+  const artists = listening ? (activity.state?.replaceAll("; ", ", ") ?? null) : null;
+  const lines = listening
+    ? [artists && `by ${artists}`, activity.largeText && `on ${activity.largeText}`]
+    : kind === "watching"
+      ? [activity.state, activity.largeText]
+      : [activity.details, activity.state];
 
   return {
     key: activity.key,
@@ -74,12 +88,10 @@ function toView(activity: Activity | null, status: PresenceStatus | undefined, i
     imageHint: activity.largeText ?? activity.name,
     smallImage: activity.smallImage,
     smallHint: activity.smallText,
-    label: listening ? `${KIND_LABEL.listening} ${activity.name}` : KIND_LABEL[activity.kind],
-    icon: activity.name === "Spotify" ? "spotify" : "discord",
+    label: titled ? `${KIND_LABEL[kind]} ${activity.name}` : KIND_LABEL[kind],
+    icon: APP_ICONS[activity.name] ?? "discord",
     title,
-    lines: (listening ? [artists && `by ${artists}`] : [activity.details, activity.state]).filter(
-      (line): line is string => Boolean(line),
-    ),
+    lines: lines.filter((line): line is string => Boolean(line)),
     progress: elapsed !== null && total !== null ? { elapsed: Math.min(elapsed, total), total } : null,
     elapsed:
       elapsed !== null && total === null && start !== null
@@ -149,14 +161,7 @@ export function ActivityCard({ discordId, idleImage, delay = 0, className }: Act
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6, ease: EASE_OUT }}
         >
-          {view.image ? (
-            // Imagens de CDNs externas que mudam o tempo todo: carrega direto, sem otimizador.
-            <Image src={view.image} alt="" fill unoptimized className="object-cover" />
-          ) : (
-            <span className="grid size-full place-items-center bg-chip text-white">
-              <BrandIcon name="discord" className="size-14" />
-            </span>
-          )}
+          {view.image ? <RemoteImage src={view.image} fallback={DISCORD_TILE} /> : DISCORD_TILE}
         </motion.div>
       ) : (
         <motion.span
@@ -216,11 +221,7 @@ export function ActivityCard({ discordId, idleImage, delay = 0, className }: Act
                 exit={{ opacity: 0, scale: 0.4 }}
                 transition={{ type: "spring", bounce: 0.45, duration: 0.5, delay: 0.15 }}
               >
-                <Tooltip content={view.smallHint ?? view.title}>
-                  <span className="relative block size-11 overflow-hidden rounded-full bg-chip ring-[5px] ring-canvas">
-                    <Image src={view.smallImage} alt="" fill unoptimized className="object-cover" />
-                  </span>
-                </Tooltip>
+                <SmallBadge src={view.smallImage} hint={view.smallHint ?? view.title} />
               </motion.span>
             )}
           </AnimatePresence>
@@ -265,15 +266,20 @@ export function ActivityCard({ discordId, idleImage, delay = 0, className }: Act
               ))}
 
               {view.progress && (
-                <motion.div variants={fadeUp} className="absolute top-[115px] left-0">
+                <motion.div variants={fadeUp} className="absolute top-[115px] left-0 w-[145px]">
                   <Tooltip content={`${formatTime(view.progress.elapsed)} / ${formatTime(view.progress.total)}`}>
                     <ProgressBar
-                      aria-label="Progresso da música"
+                      aria-label="Progresso"
                       value={view.progress.elapsed / view.progress.total}
                       delay={0.25}
-                      className="w-[145px]"
+                      className="w-full"
                     />
                   </Tooltip>
+                  {/* Decorrido e total nas pontas, como no Discord. */}
+                  <span className="mt-0.5 flex justify-between text-[11px] font-bold leading-[14px] text-muted tabular-nums">
+                    <span>{formatTime(view.progress.elapsed)}</span>
+                    <span>{formatTime(view.progress.total)}</span>
+                  </span>
                 </motion.div>
               )}
               {view.elapsed && (
@@ -303,5 +309,35 @@ export function ActivityCard({ discordId, idleImage, delay = 0, className }: Act
         live={playing !== null}
       />
     </motion.article>
+  );
+}
+
+/** Capa reserva: sem imagem na atividade ou quando ela não carrega. */
+const DISCORD_TILE = (
+  <span className="grid size-full place-items-center bg-chip text-white">
+    <BrandIcon name="discord" className="size-14" />
+  </span>
+);
+
+/**
+ * Imagem de CDN externa que muda o tempo todo (carrega direto, sem otimizador). Se o
+ * proxy do Discord falhar (acontece com algumas imagens externas), mostra o `fallback`.
+ */
+function RemoteImage({ src, fallback }: { src: string; fallback: ReactNode }) {
+  const [broken, setBroken] = useState(false);
+  if (broken) return fallback;
+  return <Image src={src} alt="" fill unoptimized className="object-cover" onError={() => setBroken(true)} />;
+}
+
+/** O ícone pequeno no canto da capa; some inteiro (com o recorte) se a imagem não carregar. */
+function SmallBadge({ src, hint }: { src: string; hint: string }) {
+  const [broken, setBroken] = useState(false);
+  if (broken) return null;
+  return (
+    <Tooltip content={hint}>
+      <span className="relative block size-11 overflow-hidden rounded-full bg-chip ring-[5px] ring-canvas">
+        <Image src={src} alt="" fill unoptimized className="object-cover" onError={() => setBroken(true)} />
+      </span>
+    </Tooltip>
   );
 }
