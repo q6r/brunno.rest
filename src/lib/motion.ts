@@ -18,6 +18,7 @@ export const ENTRANCE = {
   stack: 0.55,
   activity: 0.6,
   repos: 0.75,
+  language: 0.9,
   signature: 1.2,
 } as const;
 

@@ -1,6 +1,13 @@
 import avatar from "@/assets/avatar.webp";
 import { ageOn, birthdayLabel } from "@/lib/format";
+import type { Lang } from "@/lib/i18n";
 import type { BioPart, SocialLink, Tech } from "@/lib/types";
+
+/** A função, nos dois idiomas do botão PT/EN. */
+export const roles: Record<Lang, string> = {
+  pt: "Desenvolvedor Full Stack",
+  en: "Full Stack Developer",
+};
 
 /**
  * Todo o conteúdo do portfólio. As imagens em src/assets foram recortadas do export
@@ -8,7 +15,8 @@ import type { BioPart, SocialLink, Tech } from "@/lib/types";
  */
 export const profile = {
   name: "Brunno",
-  role: "Desenvolvedor Full Stack",
+  /** Usada no título da aba; na página a função troca de idioma (veja `roles`). */
+  role: roles.pt,
   github: "q6r",
   discordId: "1327261533612408870",
   /** AAAA-MM-DD: a idade da bio sai daqui. */
@@ -31,23 +39,37 @@ export const pinnedRepos: string[] = [];
 export const preferredLanguages = ["Rust"];
 
 /**
- * A bio do Figma. É função para a idade ser calculada a cada render da página (que se
- * regenera de hora em hora), e não uma vez só quando o módulo carrega.
+ * A bio do Figma em cada idioma do botão PT/EN. É função para a idade ser calculada a
+ * cada render da página (que se regenera de hora em hora), e não uma vez só quando o
+ * módulo carrega.
  */
-export function getBio(): BioPart[] {
+export function getBio(lang: Lang): BioPart[] {
+  const age = String(ageOn(profile.birthDate));
+  const github = { label: "Github", hint: `github.com/${profile.github}`, href: GITHUB_URL };
+
+  if (lang === "en") {
+    return [
+      "Hi, my name is Brunno! :] I'm ",
+      { label: age, hint: `Birthday: ${birthdayLabel(profile.birthDate, "en")}`, birthday: profile.birthDate },
+      " years old, I've been a Developer since ",
+      { label: "2021", hint: "Professional developer", since: 2021 },
+      ", and I started learning to code in ",
+      { label: "2018", hint: "First lines of code", since: 2018 },
+      ". I love technology and I'm always looking to learn more and more, I study cybersecurity and I have a ",
+      github,
+      " where you'll find my projects and a bit more about me.",
+    ];
+  }
+
   return [
     "Olá, me chamo Brunno! :] tenho ",
-    {
-      label: String(ageOn(profile.birthDate)),
-      hint: `Aniversário: ${birthdayLabel(profile.birthDate)}`,
-      birthday: profile.birthDate,
-    },
+    { label: age, hint: `Aniversário: ${birthdayLabel(profile.birthDate, "pt")}`, birthday: profile.birthDate },
     " anos, sou Desenvolvedor desde ",
     { label: "2021", hint: "Dev profissionalmente", since: 2021 },
     ", comecei a buscar aprender programação em ",
     { label: "2018", hint: "Primeiras linhas de código", since: 2018 },
     ". Amo tecnologia e estou buscando sempre aprender cada vez mais, curso cyber segurança e tenho um ",
-    { label: "Github", hint: `github.com/${profile.github}`, href: GITHUB_URL },
+    github,
     " onde ficam meus projetos e mais um pouco sobre mim.",
   ];
 }

@@ -2,6 +2,7 @@
 
 import { motion, type Variants } from "motion/react";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { useLang } from "@/hooks/useLang";
 import { birthdayCountdown, yearsAgo } from "@/lib/format";
 import { SPRING_POP } from "@/lib/motion";
 import type { Highlight as HighlightData } from "@/lib/types";
@@ -26,7 +27,8 @@ const CHIP_CLASS =
  * contas com a data de hoje não dão diferença de hidratação.
  */
 export function Highlight({ label, hint, since, birthday, href }: HighlightData) {
-  const tip = [hint, since === undefined ? null : yearsAgo(since), birthday ? birthdayCountdown(birthday) : null]
+  const lang = useLang();
+  const tip = [hint, since === undefined ? null : yearsAgo(since, lang), birthday ? birthdayCountdown(birthday, lang) : null]
     .filter(Boolean)
     .join(" · ");
 

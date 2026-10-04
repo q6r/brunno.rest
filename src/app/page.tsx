@@ -1,12 +1,13 @@
 import { Bio } from "@/components/about/Bio";
 import { TechStack } from "@/components/about/TechStack";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { ActivityCard } from "@/components/profile/ActivityCard";
 import { Avatar } from "@/components/profile/Avatar";
+import { RoleTitle } from "@/components/profile/RoleTitle";
 import { Signature } from "@/components/profile/Signature";
 import { SocialLinks } from "@/components/profile/SocialLinks";
 import { RepoGrid } from "@/components/projects/RepoGrid";
 import { Stage } from "@/components/Stage";
-import { Reveal } from "@/components/ui/Reveal";
 import {
   activity,
   getBio,
@@ -14,6 +15,7 @@ import {
   pinnedRepos,
   preferredLanguages,
   profile,
+  roles,
   socials,
   stack,
 } from "@/content/profile";
@@ -30,7 +32,13 @@ export default async function Home() {
 
   return (
     <Stage>
-      <div className="mx-auto grid w-full max-w-[1382px] grid-cols-1 gap-y-10 px-5 pt-10 pb-44 sm:px-8 lg:grid-cols-[382px_minmax(0,1fr)] lg:gap-x-[50px] lg:gap-y-[29px] lg:pt-[84px] lg:pb-0">
+      {/* Canto superior direito do quadro, alinhado com a borda direita da grade de repos. */}
+      <LanguageToggle
+        delay={ENTRANCE.language}
+        className="absolute top-4 right-5 z-10 sm:right-8 lg:top-[30px] lg:right-[61px]"
+      />
+
+      <div className="mx-auto grid w-full max-w-[1382px] grid-cols-1 gap-y-10 px-5 pt-16 pb-44 sm:px-8 lg:grid-cols-[382px_minmax(0,1fr)] lg:gap-x-[50px] lg:gap-y-[29px] lg:pt-[84px] lg:pb-0">
         <Avatar
           src={profile.avatar}
           alt={profile.avatarAlt}
@@ -38,10 +46,12 @@ export default async function Home() {
         />
 
         <header className="flex flex-col items-center lg:col-start-1 lg:row-start-2">
-          <Reveal as="h1" delay={ENTRANCE.role} className="text-center text-[22px] font-bold leading-[28px] text-white">
-            <span className="sr-only">{profile.name}, </span>
-            {profile.role}
-          </Reveal>
+          <RoleTitle
+            name={profile.name}
+            roles={roles}
+            delay={ENTRANCE.role}
+            className="text-center text-[22px] font-bold leading-[28px] text-white"
+          />
           <SocialLinks links={socials} delay={ENTRANCE.socials} className="mt-2.5" />
           <ActivityCard
             discordId={activity.discordId}
@@ -55,7 +65,7 @@ export default async function Home() {
           aria-label="Sobre mim"
           className="flex flex-col justify-between gap-12 lg:col-start-2 lg:row-start-1 lg:pt-[51px] lg:pb-[27px]"
         >
-          <Bio parts={getBio()} delay={ENTRANCE.bio} />
+          <Bio translations={{ pt: getBio("pt"), en: getBio("en") }} delay={ENTRANCE.bio} />
           <TechStack items={stack} delay={ENTRANCE.stack} />
         </section>
 
