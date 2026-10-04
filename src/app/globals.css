@@ -61,4 +61,10 @@
     background-color: var(--color-chip);
     color: #fff;
   }
-}
+
+  /* Troca de tema: em vez do fade padrão, a página nova se espalha num círculo (theme.ts). */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }}

@@ -8,6 +8,7 @@ import { Signature } from "@/components/profile/Signature";
 import { SocialLinks } from "@/components/profile/SocialLinks";
 import { RepoGrid } from "@/components/projects/RepoGrid";
 import { Stage } from "@/components/Stage";
+import { ThemePicker } from "@/components/ThemePicker";
 import {
   activity,
   getBio,
@@ -33,10 +34,10 @@ export default async function Home() {
   return (
     <Stage>
       {/* Canto superior direito do quadro, alinhado com a borda direita da grade de repos. */}
-      <LanguageToggle
-        delay={ENTRANCE.language}
-        className="absolute top-4 right-5 z-10 sm:right-8 lg:top-[30px] lg:right-[61px]"
-      />
+      <div className="absolute top-4 right-5 z-10 flex items-center gap-2 sm:right-8 lg:top-[30px] lg:right-[61px]">
+        <ThemePicker delay={ENTRANCE.language} />
+        <LanguageToggle delay={ENTRANCE.language + 0.06} />
+      </div>
 
       <div className="mx-auto grid w-full max-w-[1382px] grid-cols-1 gap-y-10 px-5 pt-16 pb-44 sm:px-8 lg:grid-cols-[382px_minmax(0,1fr)] lg:gap-x-[50px] lg:gap-y-[29px] lg:pt-[84px] lg:pb-0">
         <Avatar
