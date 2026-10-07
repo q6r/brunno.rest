@@ -4,7 +4,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { ActivityCard } from "@/components/profile/ActivityCard";
 import { Avatar } from "@/components/profile/Avatar";
 import { RoleTitle } from "@/components/profile/RoleTitle";
-import { Signature } from "@/components/profile/Signature";
+import { AnaSignature } from "@/components/ana/AnaSignature";
 import { SocialLinks } from "@/components/profile/SocialLinks";
 import { RepoGrid } from "@/components/projects/RepoGrid";
 import { Stage } from "@/components/Stage";
@@ -20,6 +20,7 @@ import {
   socials,
   stack,
 } from "@/content/profile";
+import { ana } from "@/content/ana";
 import { getRepos } from "@/lib/github";
 import { ENTRANCE } from "@/lib/motion";
 
@@ -75,10 +76,13 @@ export default async function Home() {
         </section>
       </div>
 
-      <Signature
+      {/* O rabisco "ANA" do canto: clicar abre a surpresa (vídeos + recado). */}
+      <AnaSignature
         text={profile.signature}
+        videos={ana.videos}
+        message={ana.message}
         delay={ENTRANCE.signature}
-        className="absolute -bottom-[43px] -left-[30px] -z-10 w-[297px] rotate-[23.29deg]"
+        className="absolute -bottom-[43px] -left-[30px] z-10 w-[297px] rotate-[23.29deg]"
       />
     </Stage>
   );
