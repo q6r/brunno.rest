@@ -1,89 +1,12 @@
-import { Bio } from "@/components/about/Bio";
-import { TechStack } from "@/components/about/TechStack";
-import { LanguageToggle } from "@/components/LanguageToggle";
-import { ActivityCard } from "@/components/profile/ActivityCard";
-import { Avatar } from "@/components/profile/Avatar";
-import { RoleTitle } from "@/components/profile/RoleTitle";
-import { AnaSignature } from "@/components/ana/AnaSignature";
-import { SocialLinks } from "@/components/profile/SocialLinks";
-import { RepoGrid } from "@/components/projects/RepoGrid";
-import { Stage } from "@/components/Stage";
-import { ThemePicker } from "@/components/ThemePicker";
-import {
-  activity,
-  getBio,
-  GITHUB_URL,
-  pinnedRepos,
-  preferredLanguages,
-  profile,
-  roles,
-  socials,
-  stack,
-} from "@/content/profile";
-import { ana } from "@/content/ana";
+﻿import { PortfolioView } from "@/components/PortfolioView";
+import { getBio, pinnedRepos, preferredLanguages, profile } from "@/content/profile";
 import { getRepos } from "@/lib/github";
-import { ENTRANCE } from "@/lib/motion";
+import { getCyberNotes } from "@/lib/cyber-notes";
 
-/**
- * Layout do Figma em duas colunas (382px + 50px + resto) dentro do quadro de 1440x1024.
- * A primeira linha alinha o avatar com bio + stack; a segunda, o cargo com a grade de
- * repositórios, que vem do GitHub. No celular vira uma coluna só, na ordem do HTML.
- */
 export default async function Home() {
-  const repos = await getRepos(profile.github, { pinned: pinnedRepos, preferLanguages: preferredLanguages });
-
-  return (
-    <Stage>
-      {/* Canto superior direito do quadro, alinhado com a borda direita da grade de repos. */}
-      <div className="absolute top-4 right-5 z-10 flex items-center gap-2 sm:right-8 lg:top-[30px] lg:right-[61px]">
-        <ThemePicker delay={ENTRANCE.language} />
-        <LanguageToggle delay={ENTRANCE.language + 0.06} />
-      </div>
-
-      <div className="mx-auto grid w-full max-w-[1382px] grid-cols-1 gap-y-10 px-5 pt-16 pb-44 sm:px-8 lg:grid-cols-[382px_minmax(0,1fr)] lg:gap-x-[50px] lg:gap-y-[29px] lg:pt-[84px] lg:pb-0">
-        <Avatar
-          src={profile.avatar}
-          alt={profile.avatarAlt}
-          className="mx-auto w-full max-w-[382px] lg:col-start-1 lg:row-start-1"
-        />
-
-        <header className="flex flex-col items-center lg:col-start-1 lg:row-start-2">
-          <RoleTitle
-            name={profile.name}
-            roles={roles}
-            delay={ENTRANCE.role}
-            className="text-center text-[22px] font-bold leading-[28px] text-white"
-          />
-          <SocialLinks links={socials} delay={ENTRANCE.socials} className="mt-2.5" />
-          <ActivityCard
-            discordId={activity.discordId}
-            idleImage={activity.idleImage}
-            delay={ENTRANCE.activity}
-            className="mt-[42px] lg:self-start lg:pl-1.5"
-          />
-        </header>
-
-        <section
-          aria-label="Sobre mim"
-          className="flex flex-col justify-between gap-12 lg:col-start-2 lg:row-start-1 lg:pt-[51px] lg:pb-[27px]"
-        >
-          <Bio translations={{ pt: getBio("pt"), en: getBio("en") }} delay={ENTRANCE.bio} />
-          <TechStack items={stack} delay={ENTRANCE.stack} />
-        </section>
-
-        <section aria-label="Projetos" className="lg:col-start-2 lg:row-start-2">
-          <RepoGrid repos={repos} profileUrl={GITHUB_URL} delay={ENTRANCE.repos} />
-        </section>
-      </div>
-
-      {/* O rabisco "ANA" do canto: clicar abre a surpresa (vídeos + recado). */}
-      <AnaSignature
-        text={profile.signature}
-        videos={ana.videos}
-        message={ana.message}
-        delay={ENTRANCE.signature}
-        className="absolute -bottom-[43px] -left-[30px] z-10 w-[297px] rotate-[23.29deg]"
-      />
-    </Stage>
-  );
+  const [repos, notes] = await Promise.all([
+    getRepos(profile.github, { pinned: pinnedRepos, preferLanguages: preferredLanguages }),
+    getCyberNotes(),
+  ]);
+  return <PortfolioView repos={repos} notes={notes} bio={{ pt: getBio("pt"), en: getBio("en") }} />;
 }

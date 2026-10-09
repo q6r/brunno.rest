@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
+html:root[data-portfolio-mode="cyber"] {
+  --color-canvas: #000;
+  --color-ink: #d4d4d4;
+  --color-muted: #e5e5e5;
+  --color-subtle: #a3a3a3;
+  --color-chip: #171717;
+  --color-chip-hover: #262626;
+  --color-chip-ink: #d4d4d4;
+  --color-panel: #0a0a0a;
+  --color-panel-hover: #171717;
+  --color-track: #262626;
+  --color-fill: #d4d4d4;
+  color-scheme: dark;
+}
+
+.cyber-surface {
+  min-height: 100dvh;
+  background: #000;
+}
+
 /* Paleta e tokens do Figma (Frame 2, 1440x1024). */
 @theme {
   --color-canvas: #95a0b1;

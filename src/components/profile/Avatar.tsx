@@ -18,7 +18,7 @@ const TILT = 6;
 const TILT_SPRING = { bounce: 0, duration: 0.6 };
 
 type AvatarProps = {
-  src: StaticImageData;
+  src: StaticImageData | string;
   alt: string;
   className?: string;
 };
@@ -67,7 +67,8 @@ export function Avatar({ src, alt, className }: AvatarProps) {
         alt={alt}
         fill
         preload
-        placeholder="blur"
+        placeholder={typeof src === "string" ? "empty" : "blur"}
+        unoptimized={typeof src === "string"}
         // No desktop o quadro escala com a tela: 382px em 1440px de largura = ~27vw.
         sizes="(min-width: 1024px) 27vw, 382px"
         className="object-cover"
