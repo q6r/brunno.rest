@@ -80,7 +80,6 @@ export function PortfolioView({ repos, bio, notes }: { repos: Repo[]; bio: Recor
 
           {!cyber && <section aria-label="Projetos" className="lg:col-start-2 lg:row-start-2"><RepoGrid repos={repos} profileUrl={GITHUB_URL} delay={ENTRANCE.repos} /></section>}
         </div>
-     /*   {!cyber && <AnaSignature text={profile.signature} videos={ana.videos} message={ana.message} delay={ENTRANCE.signature} className="absolute -bottom-[43px] -left-[30px] z-10 w-[297px] rotate-[23.29deg]" />} */
       </Stage>
     </div>
   );
